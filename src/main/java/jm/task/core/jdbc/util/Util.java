@@ -1,5 +1,6 @@
 package jm.task.core.jdbc.util;
 
+import jm.task.core.jdbc.model.User;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -14,7 +15,7 @@ public class Util {
     private static final String USER_NAME = "root";
     private static final String PASSWORD = "uGV!hu3.24sdf";
     private static Connection mySQLConn = null;
-    private static Session hibernateSession = null;
+    private static SessionFactory sessionFactory = null;
 
     public static Connection getMySQLConnection() {
         return mySQLConn;
@@ -38,23 +39,23 @@ public class Util {
     public static void initHibernateConnection() {
         String connectionURL = "jdbc:mysql://" + HOST_NAME + ":3306/" + DB_NAME;
         Configuration cfg = new Configuration()
-                //.addClass(org.hibernate.auction.Item.class)
+//                .addClass(jm.task.core.jdbc.model.User.class)
                 //.addClass(org.hibernate.auction.Bid.class)
+                .addAnnotatedClass(User.class)
                 .setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLInnoDBDialect")
                 .setProperty("hibernate.connection.url", connectionURL)
                 .setProperty("hibernate.connection.username", USER_NAME)
                 .setProperty("hibernate.connection.password", PASSWORD)
                 .setProperty("hibernate.hbm2ddl.auto", "none")
                 .setProperty("hibernate.order_updates", "true");
-        SessionFactory sessions = cfg.buildSessionFactory();
-        hibernateSession = sessions.openSession();
+        sessionFactory = cfg.buildSessionFactory();
     }
 
-    public static Session getHibernateSession() {
-        return hibernateSession;
+    public static SessionFactory getSessionFactory() {
+        return sessionFactory;
     }
 
-    public static void closeHibernateSession() {
-        hibernateSession.close();
+    public static void closeSessionFactory() {
+        sessionFactory.close();
     }
 }

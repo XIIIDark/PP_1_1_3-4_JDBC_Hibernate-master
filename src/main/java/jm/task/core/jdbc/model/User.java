@@ -4,19 +4,21 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "users")
+@Access(value=AccessType.FIELD)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
 
-    @Column
+    @Column(name = "user_name")
     private String name;
 
-    @Column
+    @Column(name = "user_lastname")
     private String lastName;
 
-    @Column
+    @Column(name = "user_age")
     private Byte age;
 
     public User() {

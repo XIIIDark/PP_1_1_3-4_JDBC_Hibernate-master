@@ -2,31 +2,32 @@ package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
-import org.hibernate.SQLQuery;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.query.NativeQuery;
 
-import java.sql.SQLException;
-import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
 
 public class UserDaoHibernateImpl implements UserDao {
 
-    private Session session;
+    private final SessionFactory sessionFactory;
 
     public UserDaoHibernateImpl() {
-        session = Util.getHibernateSession();
-
+        sessionFactory = Util.getSessionFactory();
     }
 
     private void executeSQL(String sql) {
-
-        Transaction transaction = session.beginTransaction();
-        session.createSQLQuery(sql).executeUpdate();
-        transaction.commit();
+        Transaction transaction = null;
+        try (Session session = sessionFactory.openSession()) {
+            transaction = session.beginTransaction();
+            session.createSQLQuery(sql).executeUpdate();
+            transaction.commit();
+        } catch (Exception e) {
+            assert transaction != null;
+            transaction.rollback();
+        }
 
     }
 
@@ -50,43 +51,69 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Transaction transaction = session.beginTransaction();
-        String sql = "INSERT INTO users (user_name, user_lastname, user_age)\n" +
-                " VALUES (?, ?, ?); ";
-        session.createSQLQuery(sql)
-                .setString(1, name)
-                .setString(2, lastName)
-                .setByte(3, age)
-                .executeUpdate();
-        transaction.commit();
-        System.out.println("User с именем – " + name + " добавлен в базу данных ");
+        Transaction transaction = null;
+        User user = new User(name, lastName, age);
+        try (Session session = sessionFactory.openSession()) {
+            transaction = session.beginTransaction();
+            session.save(user);
+            transaction.commit();
+            System.out.println("User с именем – " + name + " добавлен в базу данных ");
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+                throw e;
+            }
+
+        }
+
     }
 
     @Override
     public void removeUserById(long id) {
-        Transaction transaction = session.beginTransaction();
-        String sql = "DELETE FROM users WHERE user_id = ?; ";
-        session.createSQLQuery(sql)
-                .setLong(1, id)
-                .executeUpdate();
-        transaction.commit();
+
+        Transaction transaction = null;
+
+        try (Session session = sessionFactory.openSession()) {
+
+            transaction = session.beginTransaction();
+            User user = session.get(User.class, id);
+
+            if(user != null) {
+                session.remove(user);
+            }
+            transaction.commit();
+        } catch (Exception e) {
+
+            assert transaction != null;
+            transaction.rollback();
+        }
     }
 
     @Override
     public List<User> getAllUsers() {
+
         List<User> users = new ArrayList<>();
-        Transaction transaction = session.beginTransaction();
-        String sql = "SELECT * FROM users ;";
-        List<Object[]> query = (List<Object[]>) session.createSQLQuery(sql).list();
-        for (Object[] object : query) {
-            User user = new User();
-            user.setName(object[1].toString());
-            user.setLastName(object[2].toString());
-            user.setAge(Byte.parseByte(object[3].toString()));
-            users.add(user);
+        Transaction transaction = null;
+
+        try (Session session = sessionFactory.openSession()) {
+
+            transaction = session.beginTransaction();
+            String sql = "SELECT * FROM users ;";
+            List<Object[]> query = (List<Object[]>) session.createSQLQuery(sql).list();
+            for (Object[] object : query) {
+                User user = new User();
+                user.setName(object[1].toString());
+                user.setLastName(object[2].toString());
+                user.setAge(Byte.parseByte(object[3].toString()));
+                users.add(user);
+            }
+            transaction.commit();
+
+        } catch (Exception e) {
+            assert transaction != null;
+            transaction.rollback();
         }
-        transaction.commit();
-        System.out.println(users);
+
         return users;
     }
 

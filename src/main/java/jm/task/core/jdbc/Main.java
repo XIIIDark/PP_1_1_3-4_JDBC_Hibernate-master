@@ -19,11 +19,11 @@ public class Main {
         userService.saveUser("Alex1", "Art", (byte) 18);
         userService.saveUser("Alex2", "Art", (byte) 21);
         userService.saveUser("Alex3", "Art", (byte) 30);
-//        userService.removeUserById(2);
+      //userService.removeUserById(2);
         System.out.println(userService.getAllUsers());
         userService.cleanUsersTable();
         userService.dropUsersTable();
         //Util.closeMySQLConnection();
-        Util.closeHibernateSession();
+        Util.closeSessionFactory();
     }
 }
